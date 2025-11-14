@@ -1,11 +1,10 @@
-# app.py - VERSIÓN MEJORADA CON MÚLTIPLES ARCHIVOS Y CLOUD
+# app.py - VERSIÓN COMPLETA ACTUALIZADA CON SISTEMA DE COLORES
 import streamlit as st
 import pandas as pd
 import numpy as np
 import os
 import sys
 from datetime import datetime
-import base64
 
 # CONFIGURACIÓN DE PÁGINA - DEBE SER LA PRIMERA LÍNEA
 st.set_page_config(
@@ -14,6 +13,75 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# ESTILOS CSS MEJORADOS CON SISTEMA DE COLORES
+st.markdown("""
+<style>
+    /* Logo y créditos */
+    .logo-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px;
+        border-radius: 10px;
+        color: white;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    .mentor-name {
+        font-size: 16px;
+        font-weight: bold;
+        color: #ffeb3b;
+    }
+    .institution {
+        font-size: 14px;
+        font-style: italic;
+        margin-top: 5px;
+    }
+    
+    /* SISTEMA DE COLORES PARA ALERTAS */
+    .risk-high {
+        background-color: #ff4444 !important;
+        color: white !important;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-weight: bold;
+        text-align: center;
+    }
+    .risk-medium {
+        background-color: #ff9800 !important;
+        color: white !important;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-weight: bold;
+        text-align: center;
+    }
+    .risk-low {
+        background-color: #4caf50 !important;
+        color: white !important;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-weight: bold;
+        text-align: center;
+    }
+    
+    /* Mejoras generales */
+    .stButton>button {
+        background-color: #764ba2;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+    }
+    .stButton>button:hover {
+        background-color: #667eea;
+        color: white;
+    }
+    
+    /* Sidebar improvements */
+    .sidebar .sidebar-content {
+        background-color: #f8f9fa;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # Configuración para cloud
 if 'IS_CLOUD' not in os.environ:
@@ -33,8 +101,20 @@ except ImportError as e:
     st.warning(f"⚠️ Algunas funciones avanzadas no están disponibles: {e}")
     CLOUD_READY = False
 
+# FUNCIÓN PARA LOGO Y CRÉDITOS
+def show_header():
+    st.markdown("""
+    <div class='logo-header'>
+        <h1>🧠 Chatbot Analítico de Riesgo Psicosocial</h1>
+        <p><strong>Mentoría Inteligencia Artificial para Ingenieros</strong></p>
+        <p class='institution'>UNIMINUTO - Educación de calidad para todos</p>
+        <p class='mentor-name'>Desarrollado por: Geovanny Catamuscay</p>
+    </div>
+    """, unsafe_allow_html=True)
+
 def main():
-    st.title("🧠 Chatbot Analítico de Riesgo Psicosocial")
+    show_header()
+    
     st.markdown("**Análisis automatizado con Machine Learning - Versión Multi-Archivo**")
     
     # Sidebar mejorado
@@ -51,19 +131,20 @@ def main():
                 "🔄 Predictor de Rotación Voluntaria",
                 "⚠️ Predictor de Incidentes",
                 "🛡️ Perfiles de Resiliencia",
-                "📈 Efectividad de Intervenciones"
+                "📈 Efectividad de Intervenciones",
+                "🏥 Enfermedades Laborales (COLORES)",
+                "🔴 Rotación con Alertas (COLORES)"
             ],
             default=["🚨 Sistema de Alertas Tempranas", "💡 Recomendador de Intervenciones"]
         )
         
         st.divider()
-        st.subheader("ℹ️ Información")
+        st.subheader("🎨 Sistema de Alertas")
         st.info("""
-        **Novedades:**
-        - ✅ Múltiples archivos simultáneos
-        - ✅ Combinación automática de datos
-        - ✅ Análisis unificado
-        - ✅ Descarga de resultados
+        **Nuevo sistema de colores:**
+        - 🟢 **VERDE**: Riesgo bajo
+        - 🟡 **AMARILLO**: Riesgo medio  
+        - 🔴 **ROJO**: Riesgo alto
         """)
         
         st.divider()
@@ -249,6 +330,10 @@ def main():
                                 results['resiliencia'] = analyzer.perfiles_resiliencia(data)
                             elif "📈 Efectividad" in app_name:
                                 results['efectividad'] = analyzer.efectividad_intervenciones(data)
+                            elif "🏥 Enfermedades Laborales (COLORES)" in app_name:
+                                results['enfermedades_colores'] = analyzer.detector_enfermedades_colores(data)
+                            elif "🔴 Rotación con Alertas (COLORES)" in app_name:
+                                results['rotacion_colores'] = analyzer.predictor_rotacion_colores(data)
                         
                         st.session_state.analysis_results = results
                         st.success(f"✅ {len(results)} análisis completados!")
@@ -315,6 +400,10 @@ def display_combined_results(results, original_data):
                 display_estres_results(result, original_data)
             elif key == 'rotacion':
                 display_rotacion_results(result, original_data)
+            elif key == 'enfermedades_colores':
+                display_enfermedades_colores_results(result, original_data)
+            elif key == 'rotacion_colores':
+                display_rotacion_colores_results(result, original_data)
             else:
                 st.dataframe(result.head(15), use_container_width=True)
                 
@@ -389,6 +478,97 @@ def display_rotacion_results(result, original_data):
         with col2:
             if riesgo_count > 0:
                 st.dataframe(result[result['riesgo_rotacion'] == 1].head(10), use_container_width=True)
+
+def display_enfermedades_colores_results(result, original_data):
+    """Mostrar resultados de enfermedades laborales con colores"""
+    st.header("🏥 Detector de Enfermedades Laborales")
+    
+    if 'riesgo_enfermedad' in result.columns:
+        # Métricas con colores
+        alto_riesgo = len(result[result['riesgo_enfermedad'] == '🔴 Alto'])
+        medio_riesgo = len(result[result['riesgo_enfermedad'] == '🟡 Medio'])
+        bajo_riesgo = len(result[result['riesgo_enfermedad'] == '🟢 Bajo'])
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.metric("🔴 Alto Riesgo", alto_riesgo)
+        with col2:
+            st.metric("🟡 Riesgo Medio", medio_riesgo)
+        with col3:
+            st.metric("🟢 Bajo Riesgo", bajo_riesgo)
+        
+        # Tabla con resultados coloridos
+        st.subheader("📋 Resultados por Colaborador")
+        
+        display_cols = ['id_colaborador', 'riesgo_enfermedad']
+        if 'alerta_depresion' in result.columns:
+            display_cols.append('alerta_depresion')
+        if 'alerta_ansiedad' in result.columns:
+            display_cols.append('alerta_ansiedad')
+        
+        st.dataframe(result[display_cols].head(15), use_container_width=True)
+        
+        # Gráfico de distribución
+        st.subheader("📊 Distribución de Riesgos de Salud")
+        distribucion = result['riesgo_enfermedad'].value_counts()
+        st.bar_chart(distribucion)
+    
+    # Descargar resultados
+    csv = result.to_csv(index=False)
+    st.download_button(
+        label="📥 Descargar Resultados Enfermedades",
+        data=csv,
+        file_name="resultados_enfermedades_laborales.csv",
+        mime="text/csv"
+    )
+
+def display_rotacion_colores_results(result, original_data):
+    """Mostrar resultados de rotación con colores"""
+    st.header("🔴 Predictor de Rotación con Alertas")
+    
+    if 'riesgo_rotacion' in result.columns:
+        # Métricas con colores
+        alto_riesgo = len(result[result['riesgo_rotacion'] == '🔴 Alto'])
+        medio_riesgo = len(result[result['riesgo_rotacion'] == '🟡 Medio'])
+        bajo_riesgo = len(result[result['riesgo_rotacion'] == '🟢 Bajo'])
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.metric("🔴 Alto Riesgo Rotación", alto_riesgo)
+        with col2:
+            st.metric("🟡 Riesgo Medio", medio_riesgo)
+        with col3:
+            st.metric("🟢 Bajo Riesgo", bajo_riesgo)
+        
+        # Tabla con resultados
+        st.subheader("📋 Alertas de Rotación")
+        st.dataframe(result[['id_colaborador', 'riesgo_rotacion']].head(15), use_container_width=True)
+        
+        # Recomendaciones
+        st.subheader("💡 Acciones Recomendadas")
+        
+        if alto_riesgo > 0:
+            st.error(f"**🔴 CRÍTICO:** {alto_riesgo} colaboradores tienen alto riesgo de rotación. Se recomienda:")
+            st.write("- Entrevistas de retención inmediatas")
+            st.write("- Revisión de compensación y beneficios")
+            st.write("- Programas de desarrollo profesional")
+        
+        if medio_riesgo > 0:
+            st.warning(f"**🟡 ALERTA:** {medio_riesgo} colaboradores en riesgo medio. Acciones:")
+            st.write("- Programas de engagement")
+            st.write("- Mejora del clima laboral")
+            st.write("- Encuestas de satisfacción")
+    
+    # Descargar resultados
+    csv = result.to_csv(index=False)
+    st.download_button(
+        label="📥 Descargar Resultados Rotación",
+        data=csv,
+        file_name="resultados_rotacion_alertas.csv",
+        mime="text/csv"
+    )
 
 if __name__ == "__main__":
     main()
