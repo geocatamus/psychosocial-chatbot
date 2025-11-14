@@ -132,3 +132,77 @@ class PsychosocialAnalyzer:
         )
         
         return df
+
+    # =============================================
+    # NUEVAS FUNCIONES CON SISTEMA DE COLORES
+    # =============================================
+
+    def detector_enfermedades_colores(self, data):
+        """
+        Versión simple con sistema de colores para enfermedades laborales
+        """
+        df = data.copy()
+        
+        # Sistema simple de scoring
+        score = 0
+        
+        # Factor 1: Estrés alto
+        if 'nivel_estres' in df.columns:
+            df['punto_estres'] = df['nivel_estres'].isin(['Alto', 'Muy Alto']).astype(int)
+            score += df['punto_estres']
+        
+        # Factor 2: Demandas excesivas
+        if 'demandas_jornada' in df.columns:
+            df['punto_demandas'] = df['demandas_jornada'].isin(['Alto', 'Muy Alto']).astype(int)
+            score += df['punto_demandas']
+        
+        # Factor 3: Baja satisfacción
+        if 'satisfaccion_laboral' in df.columns:
+            df['punto_satisfaccion'] = (df['satisfaccion_laboral'] < 5).astype(int)
+            score += df['punto_satisfaccion']
+        
+        # Factor 4: Alto ausentismo
+        if 'ausentismo_dias' in df.columns:
+            df['punto_ausentismo'] = (df['ausentismo_dias'] > 5).astype(int)
+            score += df['punto_ausentismo']
+        
+        # Asignar niveles de riesgo con colores
+        df['riesgo_enfermedad'] = pd.cut(score, 
+                                       bins=[-1, 1, 2, 4], 
+                                       labels=['🟢 Bajo', '🟡 Medio', '🔴 Alto'])
+        
+        # Detección específica
+        df['alerta_depresion'] = np.where(score >= 2, '🔴 Alta', '🟢 Baja')
+        df['alerta_ansiedad'] = np.where(score >= 2, '🔴 Alta', '🟢 Baja')
+        
+        return df
+
+    def predictor_rotacion_colores(self, data):
+        """
+        Versión simple con sistema de colores para rotación
+        """
+        df = data.copy()
+        
+        score = 0
+        
+        # Factor 1: Baja satisfacción
+        if 'satisfaccion_laboral' in df.columns:
+            df['punto_rot_satisfaccion'] = (df['satisfaccion_laboral'] < 4).astype(int)
+            score += df['punto_rot_satisfaccion']
+        
+        # Factor 2: Estrés alto
+        if 'nivel_estres' in df.columns:
+            df['punto_rot_estres'] = df['nivel_estres'].isin(['Alto', 'Muy Alto']).astype(int)
+            score += df['punto_rot_estres']
+        
+        # Factor 3: Poca antigüedad
+        if 'antiguedad_meses' in df.columns:
+            df['punto_rot_antiguedad'] = (df['antiguedad_meses'] < 12).astype(int)
+            score += df['punto_rot_antiguedad']
+        
+        # Sistema de colores para rotación
+        df['riesgo_rotacion'] = pd.cut(score,
+                                     bins=[-1, 0, 1, 3],
+                                     labels=['🟢 Bajo', '🟡 Medio', '🔴 Alto'])
+        
+        return df
